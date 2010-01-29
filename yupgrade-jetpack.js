@@ -10,36 +10,79 @@ TODO:
 
 jetpack title: "YupGrade"
 jetpack documentation: 
-revision "0.3"
-last-modified "2010-01-05"
+revision "0.7"
+last-modified "2010-01-27"
 license: Apache 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
 platform documentation: https://developer.mozilla.org/en/Jetpack
 
 */
 
-$yupgradeIcon = "http://www.yupgrade.com/favicon.ico";
+/* vars */
+$yupgradeDomain = "http://localhost:8080";
+//$yupgradeDomain = "http://www.yupgrade.com";
+$yupgradeIcon = $yupgradeDomain + "/favicon.ico";
 
 var manifest = {
-  firstRunPage: "http://www.yupgrade.com/jetpack?installed=true",
+  firstRunPage: $yupgradeDomain + "/jetpack?installed=true",
   settings:[
-         { name: "status_prefix", 
-           type: "text", 
-           label: "Status Message Prefix",  
-           default: "Just passing along a link..."
-         }
+         { name: "status_prefix", type: "text", label: "Status Message Prefix",  default: "I enjoyed this link:" }
         ]
 };
 
 jetpack.future.import("slideBar");
 jetpack.future.import("menu");
 jetpack.future.import("storage.settings");
-jetpack.future.import("storage.simple");  
+jetpack.future.import("storage.simple");  // use this to store Twitter username (used to create YupGrade profile)
 
 
-function postCurrentPage(){
+console.log($yupgradeDomain + '/dev/rpc');
+
+  
+
+
+ jetpack.tabs.onReady(function() { 
+ 
+if (jQuery(jetpack.tabs.focused.contentDocument).data('yupgrade_panel')) return;
+jQuery(jetpack.tabs.focused.contentDocument).data('yupgrade_panel', true);
+
+     
+ jQuery.ajax({
+        type: "GET", 
+        url: $yupgradeDomain + '/dev/rpc',
+        datatype: "HTML",
+        data: { 
+             'action': 'initializeJetpackPanel',
+             'url': jetpack.tabs.focused.contentDocument.location.href
+             },
+        error: function() { console.log('error'); return false; },
+        success: function(response) {
+      if (response == "None") console.log('response was "None"');    
+      else initializePanel(response); 
+           }
+        }); 
+
+       
+}); 
+
+
+
+function runInit(){
+
+}
+
+function initializePanel(html){
+
+var $panel = jQuery(jetpack.tabs.focused.contentDocument.createElement('div'));
+$panel.append(html);
+jQuery(jetpack.tabs.focused.contentDocument.body).append($panel.children());                              
+
+}
+
+
+function postCurrentPageOnTwitter(){
 
   var $linkUrl = jetpack.tabs.focused.contentDocument.location;
-  var $statusMsg = jetpack.storage.settings.status_prefix + " " + $linkUrl;
+  var $statusMsg = jetpack.storage.settings.status_prefix + " -- " + $linkUrl;
   var $statusPlatform = "Twitter";
   jetpack.lib.twitter.statuses.update({
     data: {
@@ -60,18 +103,19 @@ function postCurrentPage(){
 };
 
 $yupgradeMenu = new jetpack.Menu(
-    ["Post This Page on Twitter",
-     "View My YupGrade Profile"]
+    ["Share This Page on Twitter",
+     "Share This Page on Facebook",
+     "Visit My YupGrade Profile"]
     );
     
 jetpack.menu.context.page.add({  
   label: "YupGrade",  
-  icon: "http://www.yupgrade.com/favicon.ico",  
+  icon: $yupgradeIcon,  
   menu: $yupgradeMenu,
   command: function(menuitem) {
-      if (menuitem.label ===  "Post This Page on Twitter")
-        return postCurrentPage();
-      if (menuitem.label ===  "View My YupGrade Profile")
+      if (menuitem.label ===  "Share This Page on Twitter")
+        return postCurrentPageOnTwitter();
+      if (menuitem.label ===  "Visit My YupGrade Profile")
         return jetpack.tabs.open("http://www.yupgrade.com/login");
       
   }
@@ -81,16 +125,27 @@ jetpack.menu.context.page.add({
   html: "<img style='cursor:pointer;' src='" + $yupgradeIcon + "'/>",
   onReady: function(widget){
           $(widget).click(function(){
-            postCurrentPage();
-           // TODO: Pop-up panel with options
+            postCurrentPageOnTwitter();
           });
     }
 });
 
-/*        
+
+/* Initialize */
+
+runInit();
+
+
+/* Search for Topics on YupGrade */
 jetpack.future.import('selection');
-jetpack.selection.onSelection(function(){
-  var textOfSel = jetpack.selection.text;
-  console.log(textOfSel);
-});
-*/
+jetpack.menu.context.page.beforeShow = function (menu) {  
+  menu.reset();  
+  if (jetpack.selection.text)  
+    menu.add({  
+      label: "Search For " + jetpack.selection.text + " on YupGrade",  
+      icon: $yupgradeIcon, 
+      command: function () {  
+        window.location.href = $yupgradeDomain + "/topic/" + jetpack.selection.text;
+      }  
+    });  
+};  
