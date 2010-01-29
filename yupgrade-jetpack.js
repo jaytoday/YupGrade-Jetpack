@@ -10,16 +10,16 @@ TODO:
 
 jetpack title: "YupGrade"
 jetpack documentation: 
-revision "0.7"
-last-modified "2010-01-27"
+revision "0.8"
+last-modified "2010-01-29"
 license: Apache 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
 platform documentation: https://developer.mozilla.org/en/Jetpack
 
 */
 
 /* vars */
-$yupgradeDomain = "http://localhost:8080";
-//$yupgradeDomain = "http://www.yupgrade.com";
+//$yupgradeDomain = "http://localhost:8080";
+$yupgradeDomain = "http://www.yupgrade.com";
 $yupgradeIcon = $yupgradeDomain + "/favicon.ico";
 
 var manifest = {
@@ -35,10 +35,6 @@ jetpack.future.import("storage.settings");
 jetpack.future.import("storage.simple");  // use this to store Twitter username (used to create YupGrade profile)
 
 
-console.log($yupgradeDomain + '/dev/rpc');
-
-  
-
 
  jetpack.tabs.onReady(function() { 
  
@@ -48,7 +44,7 @@ jQuery(jetpack.tabs.focused.contentDocument).data('yupgrade_panel', true);
      
  jQuery.ajax({
         type: "GET", 
-        url: $yupgradeDomain + '/dev/rpc',
+        url: $yupgradeDomain + '/jetpack/rpc',
         datatype: "HTML",
         data: { 
              'action': 'initializeJetpackPanel',
